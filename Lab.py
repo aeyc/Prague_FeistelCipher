@@ -1,100 +1,91 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Oct 30 23:08:16 2020
+Created on Sun Nov  1 04:23:08 2020
 
 @author: Ayca
 """
 
-#import random
-import numpy as np
-#messagelength lu =lx =2l=32 , 
-#keylengthlk =32 , nr.ofroundsn=17
-lk = 32
-lu = 32
-lx = 32
-l = lu/2
-n = 17
-k= []
-
-k0 = np.random.randint(2, size=lk)
-u = np.random.randint(2, size=lu)
-
-z0 = u[:int(lu/2)]
-y0 = u[int(lu/2):]
-
-#%%Methods
-#import binascii
-
-def hexToBinary(h):
-    return"{0:b}".format(int(h))
-    
-def linearTF(z,w):
-    v = []
-    for i in range (0,len(z)):
-        v.append((z[i]+w[i])%2)
-    return v
-
-def transposer(y,z):
-    return z,y
-
-def roundFunc(y,k): #task1
-    w =[]
-    for j in range(0,len(y)):
-        if j>=0 and j<=len(y)/2: #0th bit added for first condition j>=1
-            w.append(( y[j] + k[int(4*j-3)])%2)  #mod2 defined since 1+1 results 2
-        elif j>len(y)/2 and j<=len(y):
-            w.append((y[j] + k[int(4*j-2*l)])%2)
-        
-    
-    return w
-
-def nearlyLinear_roundFunc(y,k): #task 5
-    w =[]
-    for j in range(0,len(y)):
-        if j>=0 and j<=len(y)/2: #0th bit added for first condition j>=1
-            w.append(( y[j] + (k[int(4*j-3)] & (y[2*j-1] & k[2*j-1] & k[2*j] & k[4*j-2]))))  #mod2 defined since 1+1 results 2
-        elif j>len(y)/2 and j<=len(y):
-            w.append(( y[j] + (k[int(4*j-2*len(y))] &  k[2*j-1] & k[2*j] & y[2*j-len(y)])))
-        
-    
-    return w
-def nonLinear_roundFunc(y,k): #task7
-    w = []
-    for j in range(0,len(y)):
-        if j>=0 and j<=len(y)/2: #0th bit added for first condition j>=1
-            w.append((y[j] & k[2*j-1])  & (y[2*j-1] & k[2*j]) & k[4*j])
-        elif j>len(y)/2 and j<=len(y):
-            w.append((y[j] & k[2*j-1])  & (k[int(4*j-2*l)] & k[2*j]) & y[2*j-len(y)])
-        
-    
-    return w
-def subkeyGeneration(k,i,lk):
-    temp_k=[]
-    for j in range(0,len(k)):
-        temp_k.append(k[((5*i+j-1)%lk)])
-
-    return temp_k
 #%%
-y = [y0]
-z = [z0]
+def hexToBinary(h):
+    return "{0:b}".format(int(h))
+def linear_f(y,k,l):
+    w =[]
+    for j in range(1,l+1):
+        if j>=1 and j<=l/2:
+            tmp = (y[j-1] + k[int(4*j-3 -1)])%2
+        elif j>l/2 and j <=l:
+            tmp = (y[j-1] + k[int(4*j-2*l -1)])%2
+        w.append(tmp)
+        # print("w in linear f",w)
+    return w
+def addition(z,w):
+    v=[]
+    for i in range(0,len(w)):
+        v.append((w[i]+z[i])%2)
+    return v
+def transposer(v,y):
+    return y,v #call z,y=(z,y)
+def keyGeneration(k,lk):
+    tmp = []
+    for j in range(1,len(k)+1):
+        #ki(j)=k(((5i+j−1)modlk)+1)
+        #print(((5*i+j-1)%lk)+1 -1)
+        tmp.append(k[((5*i+j-1)%lk)+1 -1])
+    return tmp
+#%%
+# k0 = np.random.randint(2, size=lk)
+# u = np.random.randint(2, size=lu)
+k0 = 0x80000000
+k0 = list(hexToBinary(k0))
+k0 = [int(i) for i in k0] 
+k=[]
+k.append(k0)
+
+u = 0x80000000
+u = list(hexToBinary(u))
+u = [int(i) for i in u] 
+
+print("u: ", u)
+print("k0: ", k0)
+
+z = []
+y = []
 w = []
 v = []
-k =[k0]
-for i in range(0,n):
-    print("\n\nIteration i = ",i)
-    w.append(roundFunc(y[i],k[i]))
-    print("w[{}]:{}".format(i,w[i]))
-    v.append(linearTF(z[i],w[i]))
-    print("v[{}]:{}".format(i,v[i]))
-    temp_z_next,temp_y_next = transposer(y[i],z[i]) #def transposer(y,z):
-    if(len(z)<n and len(y)<n):
-        y.append(temp_y_next)
-        z.append(temp_z_next)
-        print("znext:{} ynext:{}".format(temp_z_next,temp_y_next))
-        k.append(subkeyGeneration(k[i],i,lk)) #is next k defined by first key or last key?
-
-x = np.concatenate((v[n-1],y[n-1]), axis=None)
-print("Ciphertext x:",x)
-        
 #%%
+z.append(u[:int(len(u)/2)])
+y.append(u[int(len(u)/2):])
+print("z0:{}, len(z0):{} ".format(z[0],len(z[0])))
+print("y0:{}, len(y[0]):{}".format(y[0],len(y[0])))
+lu = 32
+lx = 32
+l = int(lu/2)
+lk = 32
+n = 17
+
+# w.append(linear_f(y[0],k[0],l))
+# print("w[0]",w[0])
+# v.append(addition(z[0],w[0]))
+# print("v[0]",v[0])
+# new_z,new_y = transposer(z,y)
+# y.append(new_y)
+# z.append(new_z)
+
+for i in range(1,n):
+    print("\n\n Iteration:",i)
+    w_temp = linear_f(y[i-1],k[i-1],l)
+    w.append(w_temp)
+    print("w[{}]:{}".format(i,w[i-1]))
+    v.append(addition(z[i-1],w[i-1]))
+    print("v[{}]:{}".format(i,v[i-1]))
+    new_z,new_y = y[i-1],v[i-1]
+    print("potential_x: ", v[-1]+y[-1])
+    print("new_z:{}\nnew_y:{}".format(new_z,new_y))
+    y.append(new_y)
+    z.append(new_z)
+    new_key = keyGeneration(k[i-1],lk)
+    
+    k.append(new_key)
+    print("new_key",k[i])
+    
