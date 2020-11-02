@@ -35,20 +35,33 @@ def nearlyLinear_f(y,k):
     l=len(y)
     w =[]
     for j in range(1,l+1): #1 to 16
-        #yi(j) ^ {ki(4j−3) ∧ [yi(2j−1) ∨ ki(2j−1)∨ki(2j)∨ki(4j−2)]} , 1≤j≤l/2
         if j>=1 and j<=l/2: #1 to l/2 = 8
             tmp = y[j-1] ^ (k[int(4*j-3)-1] & 
                             (y[(2*j -1) -1] #y[2j-1]
                             | k[(2*j -1) -1] #k[2j-1]
                             | k[(2*j)-1] #k[2j]
                             | k[(4*j -2) -1]))
-        #yi(j) ^ {ki(4j−2l)∧[ki(4j−2l−1) ∨ ki(2j−1) ∨ ki(2j)∨yi(2j−l)]} , l/2<j≤l
         elif j>l/2 and j <=l: #15
-            tmp = y[j-1] ^ (k[int(4*j-2*l) -1] & 
+            tmp = y[j-1] ^ (k[int(4*j-2*l) -1] and 
                             (k[(4*j-2*l-1) -1]
-                             | k[(2*j-1) -1]
-                             | k[(2*j) -1]
-                             | y[(2*j-l)-1]))
+                             or k[(2*j-1) -1]
+                             or k[(2*j) -1]
+                             or y[(2*j-l)-1]))        
+        w.append(tmp)
+    return w
+
+def nonLinear_f(y,k):
+    l=len(y)
+    w =[]
+    for j in range(1,l+1): #1 to 16
+        if j>=1 and j<=l/2: #1 to l/2 = 8
+            tmp = ((y[j-1] & k[(2*j-1) -1]) | 
+                   (y[(2*j-1) -1] & k[(2*j) -1]) | 
+                   k[(4*j) -1])
+        elif j>l/2 and j <=l: #15
+            tmp = ((y[j-1] & k[(2*j-1) -1]) | 
+                   (k[(4*j-2*l-1) -1] & k[(2*j) -1]) | 
+                   y[(2*j-l) -1])
         w.append(tmp)
     return w
 
@@ -70,11 +83,7 @@ def Encryption(u,k,n,taskNumber):
     y = u[:int(len(u)/2)] #initialize y
     z = u[int(len(u)/2):] #initialize z
     k = []
-    #lu = lx = int(len(u)) #messagelength lu=lx=2*l
-    #l = int(lu/2)
-    #lk = int(len(u)) #keylength lk
-    #n = 17 #n nr.ofrounds
-    
+
     for i in range(0,n):
         
         new_key = keyGeneration(k0,i) #generate key for i-th round
@@ -85,6 +94,9 @@ def Encryption(u,k,n,taskNumber):
             w = linear_f(y,k[i]) #compute w
         elif taskNumber == 5:
             w = nearlyLinear_f(y,k[i])
+        elif taskNumber ==7:
+            w = nonLinear_f(y,k[i])
+            
         v = addition(z,w) #compute v and attach to its list
         
         if (i<n-1):
@@ -93,7 +105,8 @@ def Encryption(u,k,n,taskNumber):
             z = new_z #z for the next round
         
         x =  y +v
-        print(x)
+
+        
         
     print("x:", x)
     binaryToHex(x)
@@ -121,15 +134,19 @@ def Decryption(x,k,n,taskNumber):
         
     print("u:", u)
     binaryToHex(u)
-    return u,u_l
-
+    return u
+#%%
+import numpy as np
 #Task 3/4
 #find matrix A
 def find_A(lu,lk):
     matrixI = np.identity(lk)
+    matrixI = matrixI.astype(int)
     a=[]
     null_vector = np.zeros(lu,dtype=int)
+    null_vector = null_vector.astype(int)
     for i in range (0, lu):
+        print(matrixI)
         tmp = Encryption(matrixI[i],null_vector,17,1)
         a.append(tmp)
     return a
@@ -151,9 +168,14 @@ def linear_cryptoanalysis_KPA(u,x):
     b = find_B(int(len(u)),int(len(u)))
     k = np.dot(a,x+np.dot(b,u))
     return k
-
 #%%Task1 - Test
 print("Task 1")
+lu = 32
+lx = 32
+l = 16
+lk = 32
+n = 17
+
 k0 = 0x80000000
 k0 = list(hexToBinary(k0))
 k0 = [int(i) for i in k0] 
@@ -162,8 +184,54 @@ k0 = [int(i) for i in k0]
 u = 0x80000000
 u = list(hexToBinary(u))
 u = [int(i) for i in u] 
-x1,k = Encryption(u,k0,17,1)
-u_res1,u_l = Decryption(x1,k,17,1)
+x1,k = Encryption(u,k0,n,1)
+u_res1 = Decryption(x1,k,n,1)
+
+#%%Task5 - Test
+print("\n\nTask 5")
+lu = 32
+lx = 32
+l = 16
+lk = 32
+n = 5 
+
+k0 = 0x87654321
+k0 = hexToBinary(k0)
+k0 = k0.zfill(lk) 
+k0 = list(k0)
+k0 = [int(i) for i in k0] 
+
+
+u = 0x12345678 #problem with this hex - in slides zero paddling applied
+u = hexToBinary(u)
+u = u.zfill(lu) #zfill func to equalize current size of u to lu
+u = list(u)
+u = [int(i) for i in u] 
+
+x5,k = Encryption(u,k0,n,5)
+#%%Task 7 - Test
+print("\n\nTask 7")
+lu = 16
+lx = 16
+l = 8
+lk = 16
+n = 13
+
+k0 = 0x369C
+k0 = hexToBinary(k0)
+k0 = k0.zfill(lk)
+k0 = list(k0)
+k0 = [int(i) for i in k0] 
+
+u = hexToBinary(0x0000)
+u = hexToBinary(u)
+u = u.zfill(lu) #zfill func to equalize current size of u to lu
+u = list(u)
+u = [int(i) for i in u] 
+
+x5,k = Encryption(u,k0,n,7)
+#%% Task 3-4 - Test
 
 #trying to find k with linear cipher
-k_hacked = linear_cryptoanalysis_KPA(u,x1)
+#k_hacked = linear_cryptoanalysis_KPA(u,x1)
+
