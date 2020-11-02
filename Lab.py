@@ -3,7 +3,7 @@
 """
 Created on Sun Nov  1 04:23:08 2020
 
-@author: Ayca
+@author: Ayca & Emanuele
 """
 
 #%%
