@@ -11,7 +11,7 @@ def hexToBinary(h):
 
 ##Feistel cipher with linear f
 def linear_f(y,k):
-    l=int(len(y))
+    l=len(y)
     w =[]
     for j in range(1,l+1): #1 to 16
         if j>=1 and j<=l/2: #1 to l/2 = 8
@@ -51,8 +51,8 @@ v = [] #create v
 
 #%% Encryption
 
-y.append(u[:int(len(u)/2)]) #initialize y
-z.append(u[int(len(u)/2):]) #initialize z
+y = u[:int(len(u)/2)] #initialize y
+z = u[int(len(u)/2):] #initialize z
 
 lu = lx = int(len(u)) #messagelength lu=lx=2*l
 l = int(lu/2)
@@ -64,17 +64,18 @@ for i in range(0,n):
     new_key = keyGeneration(k0,i) #generate key for i-th round
     k.append(new_key) ##attach it to list of key
     
-    w_temp = linear_f(y[i],k[i]) #compute w
-    w.append(w_temp) ##attach it to list of w
+    w = linear_f(y,k[i]) #compute w
+    #w.append(w_temp) ##attach it to list of w
     
-    v.append(addition(z[i],w[i])) #compute v and attach to its list
+    v = addition(z,w) #compute v and attach to its list
     
-    new_z,new_y = y[-1],v[-1] #transposition
+    if (i<n-1):
+        new_z,new_y = y,v #transposition
+        y = new_y #y for the next round
+        z = new_z #z for the next round
     
-    y.append(new_y) #y for the next round
-    z.append(new_z) #z for the next round
-    
-    x =  y[i] +v[i]
+    x =  y +v
+    print(x)
     
 print("x:", x)
 
