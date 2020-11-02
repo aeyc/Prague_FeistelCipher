@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sun Nov  1 04:23:08 2020
-
 @author: Ayca & Emanuele
 """
 
@@ -50,7 +49,7 @@ y = [] #create y
 w = [] #create w
 v = [] #create v
 
-#%%
+#%% Encryption
 
 y.append(u[:int(len(u)/2)]) #initialize y
 z.append(u[int(len(u)/2):]) #initialize z
@@ -78,3 +77,11 @@ for i in range(0,n):
     x =  y[i] +v[i]
     
 print("x:", x)
+
+#%%
+#outputing the hex version of cipher text
+x_str = ""
+for i in range(0,len(x)):
+    x_str += str(x[i])
+x_hex = hex(int(x_str, 2))
+print("Hex verison of x: ",hex(int(x_str, 2)))
