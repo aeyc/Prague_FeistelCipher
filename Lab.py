@@ -85,3 +85,20 @@ for i in range(0,len(x)):
     x_str += str(x[i])
 x_hex = hex(int(x_str, 2))
 print("Hex verison of x: ",hex(int(x_str, 2)))
+#%% Decryption - Task2
+yx = u[:int(len(x)/2)] #initialize y
+vx = u[int(len(x)/2):] #initialize z
+k.reverse()
+u_l = []
+for i in range(0,n):
+    wx = linear_f(yx,k[0])
+    zx = addition(vx,wx)
+    vx = yx
+    yx = zx
+    ux = yx + vx
+
+u_str = ""
+for i in range(0,len(u)):
+    u_str += str(u[i])
+u_hex = hex(int(u_str, 2))
+print("Hex verison of u: ",hex(int(u_str, 2)))    
