@@ -122,6 +122,36 @@ def Decryption(x,k,n,taskNumber):
     print("u:", u)
     binaryToHex(u)
     return u,u_l
+
+#Task 3/4
+#find matrix A
+def find_A(lu,lk):
+    matrixI = np.identity(lk)
+    a=[]
+    null_vector = np.zeros(lu,dtype=int)
+    for i in range (0, lu):
+        tmp = Encryption(matrixI[i],null_vector,17,1)
+        a.append(tmp)
+    return a
+
+#find matrix B
+def find_B(lu,lk):
+    matrixI = np.identity(lk)
+    b=[]
+    null_vector = np.zeros(lu, dtype=int)
+    for i in range (0, lu):
+        tmp = Encryption(null_vector,matrixI[i],17,1)
+        b.append(tmp)
+    return b
+
+#linear cryptoanalusis KPA
+def linear_cryptoanalysis_KPA(u,x):
+    a = find_A(int(len(u)),int(len(u)))
+    a = np.linalg.inv(a)
+    b = find_B(int(len(u)),int(len(u)))
+    k = np.dot(a,x+np.dot(b,u))
+    return k
+
 #%%Task1 - Test
 print("Task 1")
 k0 = 0x80000000
@@ -135,4 +165,5 @@ u = [int(i) for i in u]
 x1,k = Encryption(u,k0,17,1)
 u_res1,u_l = Decryption(x1,k,17,1)
 
-
+#trying to find k with linear cipher
+k_hacked = linear_cryptoanalysis_KPA(u,x1)
