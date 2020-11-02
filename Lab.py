@@ -70,9 +70,10 @@ lk = 32
 n = 17
 
 pot_x = []
-for i in range(0,n ): #1 to 17 #0 to 16
+for i in range(0,n): #1 to 17 #0 to 16
     new_key = keyGeneration(k0,lk,i)
     k.append(new_key)
+    print("new_key",k[i])
     print("\n\n Iteration:",i)
     w_temp = linear_f(y[i],k[i],l) #l = 16
     w.append(w_temp)
@@ -82,20 +83,22 @@ for i in range(0,n ): #1 to 17 #0 to 16
     #new_z,new_y = y[i-1],v[i-1]
     new_z,new_y = y[-1],v[-1]
     print("potential_x: ", v[-1]+z[-1])
-    print("new_z:{}\nnew_y:{}".format(new_z,new_y))
-    y.append(new_y)
-    z.append(new_z)
+    if (i<n-1): #last transpositon is skipped
+        print("new_z:{}\nnew_y:{}".format(new_z,new_y))
+        y.append(new_y)
+        z.append(new_z)
     
     
-    
-    print("new_key",k[i])
-    print("Given x: ", "1101 1000 0000 1011 | 0001 1010 0110 0011")
     
 print("Given x: ", "1101 1000 0000 1011 | 0001 1010 0110 0011")
 x_should_be = list("11011000000010110001101001100011")
 x_should_be = [int(i) for i in x_should_be] 
 
-if (v[-1] == x_should_be[:16]):
-  print("last v matches with first part of x")
   
-hhhh =  v[16] +z[15]
+x_curr = y[-1] + v[-1]
+print(x_curr==x_should_be)
+x_str = ""
+for i in range(0,len(x_curr)):
+    x_str += str(x_curr[i])
+x_hex = hex(int(x_str, 2))
+print("Hex verison of x: ",hex(int(x_str, 2)))
