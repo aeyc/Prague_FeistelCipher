@@ -18,6 +18,19 @@ def binaryToHex(x):
     print("Hex verison: ",hex(int(x_str, 2)))
     return x_hex
 
+#printEnc function to format output of Encryption
+def printEnc(x):
+    print("\nEncryption:")
+    print("x:", x)
+    binaryToHex(x)
+    
+#printDec function to format output of Decryption
+def printDec(u)  :
+    print("\nDecryption:")
+    print("u:", u)
+    binaryToHex(u)
+    
+    
 ##Feistel cipher with linear f - Task 1
 def linear_f(y,k):
     l=len(y)
@@ -29,6 +42,7 @@ def linear_f(y,k):
             tmp = y[j-1] ^ k[int(4*j-2*l)-1]
         w.append(tmp)
     return w
+
 
 ##Feistel cipher with nearly-linear f - Task 5
 def nearlyLinear_f(y,k):
@@ -50,6 +64,8 @@ def nearlyLinear_f(y,k):
         w.append(tmp)
     return w
 
+
+##Feistel cipher with non-linear f - Task 7
 def nonLinear_f(y,k):
     l=len(y)
     w =[]
@@ -65,12 +81,14 @@ def nonLinear_f(y,k):
         w.append(tmp)
     return w
 
+##bitwise addition function
 def addition(z,w):
     v=[]
     for i in range(0,len(w)):
-        v.append((w[i]^z[i]))
+        v.append((w[i]^z[i])) #(w[i]+z[i])%2
     return v
 
+##key generation function - depends only on k0 and roundNumber
 def keyGeneration(k,i):
     tmp = []
     for j in range(1,len(k)+1): # 1 to 32
@@ -79,12 +97,12 @@ def keyGeneration(k,i):
 
 #%% Encryption
 def Encryption(u,k,n,taskNumber):
-    print("\n\nEncryption:\n")
+    #print("\n\nEncryption:\n")
     y = u[:int(len(u)/2)] #initialize y
     z = u[int(len(u)/2):] #initialize z
     k = []
 
-    for i in range(0,n):
+    for i in range(0,n): # i represents the roundnumber here
         
         new_key = keyGeneration(k0,i) #generate key for i-th round
         k.append(new_key) ##attach it to list of key
@@ -99,22 +117,20 @@ def Encryption(u,k,n,taskNumber):
             
         v = addition(z,w) #compute v and attach to its list
         
-        if (i<n-1):
+        if (i<n-1): # we are ignoring the last transposition
             new_z,new_y = y,v #transposition
             y = new_y #y for the next round
             z = new_z #z for the next round
         
-        x =  y +v
-
-        
-        
-    print("x:", x)
-    binaryToHex(x)
+        x =  y + v
     return x,k
-
+#calling encryption:
+# x = Encryption(null_vector,matrixI[i],17,1)[0]
+# k = Encryption(null_vector,matrixI[i],17,1)[1]
+# x,k = Encryption(null_vector,matrixI[i],17,1)
 #%% Task 2 - Decryption 
-def Decryption(x,k,n,taskNumber):
-    print("\n\nDecryption:\n")
+def Decryption(x,k,n,taskNumber): # k = is list of generated keys
+    #print("\n\nDecryption:\n")
 
     y = x[:int(len(x)/2)] #initialize y
     v = x[int(len(x)/2):] #initialize v
@@ -131,9 +147,6 @@ def Decryption(x,k,n,taskNumber):
         
         u =  y +z
         u_l.append(u)
-        
-    print("u:", u)
-    binaryToHex(u)
     return u
 #%%
 import numpy as np
@@ -146,8 +159,9 @@ def find_A(lu,lk):
     null_vector = np.zeros(lu,dtype=int)
     null_vector = null_vector.astype(int)
     for i in range (0, lu):
-        print(matrixI)
-        tmp = Encryption(matrixI[i],null_vector,17,1)
+        tmp = Encryption(matrixI[i],null_vector,17,1)[0]
+        #Encryption func returns 2 values: x and k
+        # in that case we need to specify whether we want x or k
         a.append(tmp)
     return a
 
@@ -157,17 +171,28 @@ def find_B(lu,lk):
     b=[]
     null_vector = np.zeros(lu, dtype=int)
     for i in range (0, lu):
-        tmp = Encryption(null_vector,matrixI[i],17,1)
+        tmp = Encryption(null_vector,matrixI[i],17,1)[0]
         b.append(tmp)
     return b
 
 #linear cryptoanalusis KPA
 def linear_cryptoanalysis_KPA(u,x):
     a = find_A(int(len(u)),int(len(u)))
-    a = np.linalg.inv(a)
+    
+
+    a_inv = np.linalg.inv(a)
+    det = np.linalg.det(a)
+    a_invb = np.mod(((a_inv.astype(int))*det),2)
+    #print("\n\na_inv",a_invb)
+   
+   
     b = find_B(int(len(u)),int(len(u)))
-    k = np.dot(a,x+np.dot(b,u))
-    return k
+    #print("\n\nb",b)
+    
+    k = np.matmul(a_invb,x + np.matmul(b,u))
+    k = np.mod(k,2)
+    return a,a_invb,b,k
+
 #%%Task1 - Test
 print("Task 1")
 lu = 32
@@ -185,8 +210,22 @@ u = 0x80000000
 u = list(hexToBinary(u))
 u = [int(i) for i in u] 
 x1,k = Encryption(u,k0,n,1)
-u_res1 = Decryption(x1,k,n,1)
+printEnc(x1)
 
+print("\n\nTask 2")
+u_res1 = Decryption(x1,k,n,1)
+printDec(u_res1)
+
+#%%Task 3-4 
+print("\n\nTask 3-4")
+#trying to find k with linear cipher
+u = 0x80000000
+u = list(hexToBinary(u))
+u = [int(i) for i in u] 
+
+
+k_hacked = linear_cryptoanalysis_KPA(u,x1)
+print(k0==k_hacked)
 #%%Task5 - Test
 print("\n\nTask 5")
 lu = 32
@@ -209,6 +248,7 @@ u = list(u)
 u = [int(i) for i in u] 
 
 x5,k = Encryption(u,k0,n,5)
+printEnc(x5)
 #%%Task 7 - Test
 print("\n\nTask 7")
 lu = 16
@@ -229,9 +269,7 @@ u = u.zfill(lu) #zfill func to equalize current size of u to lu
 u = list(u)
 u = [int(i) for i in u] 
 
-x5,k = Encryption(u,k0,n,7)
+x7,k = Encryption(u,k0,n,7)
+printEnc(x7)
 #%% Task 3-4 - Test
-
-#trying to find k with linear cipher
-#k_hacked = linear_cryptoanalysis_KPA(u,x1)
 
