@@ -6,6 +6,40 @@ Created on Sun Nov  1 04:23:08 2020
 """
 
 #%%
+#readFile_Binary Func takes filename, returns list with pairs in given filename
+#CALL: 
+#    readFile_Binary('KPApairsPrague_linear')
+#    readFile_Binary('KPApairsPrague_nearly_linear')
+#    readFile_Binary('KPApairsPrague_non_linear')
+#returns 2 dimensional list
+#USAGE:
+#   lst = readFile_Binary('KPApairsPrague_non_linear')
+#   lst[0] = first pair, 
+#   lst[0][0] = first u in first pair
+#   lst[0][1] = first x in first pair
+def readFile_Binary(filename):
+    with open(filename,'r') as f:
+        data = f.read()
+        
+    data = data.split()
+    l = []
+    pairs = []
+    for i in range(0,len(data)):
+        hexadecimal = data[i]
+        end_length = len(hexadecimal) * 4
+        hex_as_int = int(hexadecimal, 16)
+        hex_as_binary = bin(hex_as_int)
+        padded_binary = hex_as_binary[2:].zfill(end_length)
+        padded_binary = list(padded_binary)
+        padded_binary = [int(i) for i in padded_binary]
+        if (len(pairs)==0):
+            pairs.append(padded_binary)
+        elif len(pairs) == 1:
+            pairs.append(padded_binary)
+            l.append(pairs)
+            pairs = []
+    return l
+
 def hexToBinary(h):
     return "{0:b}".format(int(h))
 
