@@ -11,7 +11,7 @@ Created on Sun Nov  1 04:23:08 2020
 #    readFile_Binary('KPApairsPrague_linear')
 #    readFile_Binary('KPApairsPrague_nearly_linear')
 #    readFile_Binary('KPApairsPrague_non_linear')
-#returns 2 dimensional list
+#returns 2 dimensional list - list of pairs
 #USAGE:
 #   lst = readFile_Binary('KPApairsPrague_non_linear')
 #   lst[0] = first pair, 
@@ -130,7 +130,7 @@ def keyGeneration(k,i):
     return tmp
 
 #%% Encryption
-def Encryption(u,k,n,taskNumber):
+def Encryption(u,k0,n,taskNumber):
     #print("\n\nEncryption:\n")
     y = u[:int(len(u)/2)] #initialize y
     z = u[int(len(u)/2):] #initialize z
@@ -186,6 +186,7 @@ def Decryption(x,k,n,taskNumber): # k = is list of generated keys
 import numpy as np
 #Task 3/4
 #find matrix A
+
 def find_A(lu,lk):
     matrixI = np.identity(lk)
     matrixI = matrixI.astype(int)
@@ -227,6 +228,9 @@ def linear_cryptoanalysis_KPA(u,x):
     k = np.mod(k,2)
     return a,a_invb,b,k
 
+########################################################################################
+#main()
+
 #%%Task1 - Test
 print("Task 1")
 lu = 32
@@ -253,13 +257,13 @@ printDec(u_res1)
 #%%Task 3-4 
 print("\n\nTask 3-4")
 #trying to find k with linear cipher
-u = 0x80000000
-u = list(hexToBinary(u))
-u = [int(i) for i in u] 
+# u = 0x80000000
+# u = list(hexToBinary(u))
+# u = [int(i) for i in u] 
 
 
-k_hacked = linear_cryptoanalysis_KPA(u,x1)
-print(k0==k_hacked)
+# k_hacked = linear_cryptoanalysis_KPA(u,x1)
+# print(k0==k_hacked)
 #%%Task5 - Test
 print("\n\nTask 5")
 lu = 32
@@ -305,5 +309,5 @@ u = [int(i) for i in u]
 
 x7,k = Encryption(u,k0,n,7)
 printEnc(x7)
-#%% Task 3-4 - Test
+
 
