@@ -191,51 +191,36 @@ def Decryption(x,k,n,taskNumber): # k = is list of generated keys
 import numpy as np
 #Task 3/4
 #find matrix A
-
 def find_A(lu,lk):
-    matrixI = np.identity(lk)
-    matrixI = matrixI.astype(int)
+    matrixI = np.identity(lk).astype(int)
     a=[]
-    null_vector = np.zeros(lu,dtype=int)
-    null_vector = null_vector.astype(int)
+    null_vector = np.zeros(lu,dtype=int) 
     for i in range (0, lu):
-        tmp = Encryption(matrixI[i],null_vector,17,1)[0]
-        #Encryption func returns 2 values: x and k
-        # in that case we need to specify whether we want x or k
-        a.append(tmp)
-    return a
+        a.append(Encryption(matrixI[i],null_vector,17,1)[0])
+    a1=np.transpose(a)
+    return a1
 
 #find matrix B
 def find_B(lu,lk):
-    matrixI = np.identity(lk)
+    matrixI = np.identity(lk).astype(int)
     b=[]
     null_vector = np.zeros(lu, dtype=int)
     for i in range (0, lu):
-        tmp = Encryption(null_vector,matrixI[i],17,1)[0]
-        b.append(tmp)
-    return b
+        b.append(Encryption(null_vector,matrixI[i],17,1)[0])
+    b1=np.transpose(b)
+    return b1
 
 #linear cryptoanalusis KPA
 def linear_cryptoanalysis_KPA(u,x):
-    a = find_A(int(len(u)),int(len(u)))
     
-
+    a=find_A(int(len(u)),int(len(u)))
     a_inv = np.linalg.inv(a)
     det = np.linalg.det(a)
     a_invb = np.mod(((a_inv.astype(int))*det),2)
-    #print("\n\na_inv",a_invb)
-   
-   
-    b = find_B(int(len(u)),int(len(u)))
-    #print("\n\nb",b)
-    
-    k = np.matmul(a_invb,x + np.matmul(b,u))
-    k = np.mod(k,2)
-    return a,a_invb,b,k
-
-########################################################################################
-#main()
-
+    b= find_B(int(len(u)),int(len(u)))    
+    tmp = x + np.matmul(b,u)
+    k = np.mod(np.matmul(a_invb,tmp),2).astype(int)
+    return k
 #%%Task1 - Test
 print("Task 1")
 lu = 32
@@ -262,13 +247,34 @@ printDec(u_res1)
 #%%Task 3-4 
 print("\n\nTask 3-4")
 #trying to find k with linear cipher
-# u = 0x80000000
-# u = list(hexToBinary(u))
-# u = [int(i) for i in u] 
+u = 0x80000000
+u = list(hexToBinary(u))
+u = [int(i) for i in u] 
 
+k_hacked = linear_cryptoanalysis_KPA(u,x1)
+print("hacked key :"+ str(k_hacked))
+print("key zero:"+ str(k0))
+print(k_hacked == k0)
 
-# k_hacked = linear_cryptoanalysis_KPA(u,x1)
-# print(k0==k_hacked)
+print("\n\nTask 4 - Checking Pairs")
+filename = "KPApairsPrague_linear.hex"
+data = readFile_Binary(filename)
+
+lu = len(data[0][0])
+lx = len(data[0][1])
+k_hacked_list = []
+for i in data:
+    k_hacked = linear_cryptoanalysis_KPA(i[0],i[1])
+    #print("For u = {}\nFor x = {}\nk = {}".format(binaryToHex(i[0]),binaryToHex(i[1]),k_hacked))
+    k_hacked_list.append(k_hacked)
+for i in data:
+    print("For u = ",binaryToHex(i[0]))
+    for j in range(0,len(k_hacked_list) ):
+        res = Encryption(i[0],k_hacked_list[j],17,1)[0]
+        binaryToHex(res)
+    
+#print(binaryToHex(data[0][0]))
+#print(binaryToHex(Encryption(data[0][0],linear_cryptoanalysis_KPA(data[0][0],data[0][1]),17,1)[0]))
 #%%Task5 - Test
 print("\n\nTask 5")
 lu = 32
@@ -318,6 +324,7 @@ printEnc(x7)
 u_res7 = Decryption(x7,k,n,7) #Decryption test of Task7
 printDec(u_res7)
 #%% Task 8 - Meet in Middle Attack
+
 print("\n\nTask 8")
 filename = "KPApairsPrague_non_linear.hex"
 data = readFile_Binary(filename)
