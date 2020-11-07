@@ -49,20 +49,19 @@ def binaryToHex(x):
     for i in range(0,len(x)):
         x_str += str(x[i])
     x_hex = hex(int(x_str, 2))
-    print("Hex verison: ",hex(int(x_str, 2)))
     return x_hex
 
 #printEnc function to format output of Encryption
 def printEnc(x):
     print("\nEncryption:")
     print("x:", x)
-    binaryToHex(x)
+    print(binaryToHex(x))
     
 #printDec function to format output of Decryption
 def printDec(u)  :
     print("\nDecryption:")
     print("u:", u)
-    binaryToHex(u)
+    print(binaryToHex(u))
     
     
 ##Feistel cipher with linear f - Task 1
@@ -187,9 +186,10 @@ def Decryption(x,k,n,taskNumber): # k = is list of generated keys
         u =  y +z
         u_l.append(u)
     return u
-#%%
+#%% Task 3-4
 import numpy as np
-#Task 3/4
+from numpy.linalg import inv,det
+
 #find matrix A
 def find_A(lu,lk):
     matrixI = np.identity(lk).astype(int)
@@ -197,29 +197,35 @@ def find_A(lu,lk):
     null_vector = np.zeros(lu,dtype=int) 
     for i in range (0, lu):
         a.append(Encryption(matrixI[i],null_vector,17,1)[0])
-    a1=np.transpose(a)
-    return a1
+    a = np.transpose(a)
+    return a
 
-#find matrix B
 def find_B(lu,lk):
     matrixI = np.identity(lk).astype(int)
     b=[]
     null_vector = np.zeros(lu, dtype=int)
     for i in range (0, lu):
         b.append(Encryption(null_vector,matrixI[i],17,1)[0])
-    b1=np.transpose(b)
-    return b1
+    b = np.transpose(b)
+    return b
 
-#linear cryptoanalusis KPA
+def binaryInv(a):
+    a_invb = (inv(a)*det(a)).astype(int)
+    a_mod = np.remainder(a_invb, 2)
+    return a_mod
+#a = np.array([[0,0,0,1,1],[1,0,1,0,1],[1,1,1,1,0],[1,1,0,0,1],[0,0,1,0,1]])
+#binaryInv(a)
+
+#linear cryptoanalysis KPA
 def linear_cryptoanalysis_KPA(u,x):
-    
-    a=find_A(int(len(u)),int(len(u)))
-    a_inv = np.linalg.inv(a)
-    det = np.linalg.det(a)
-    a_invb = np.mod(((a_inv.astype(int))*det),2)
-    b= find_B(int(len(u)),int(len(u)))    
-    tmp = x + np.matmul(b,u)
-    k = np.mod(np.matmul(a_invb,tmp),2).astype(int)
+    a=find_A(len(u),len(u))
+    a_inv = binaryInv(a)
+    b= find_B(len(u),len(u)) 
+    tmp = np.dot(b,u)
+    tmp = tmp+x
+    tmp = np.remainder(tmp,2)
+    k = np.dot(a_inv,tmp)
+    k = np.remainder(k,2)
     return k
 #%%Task1 - Test
 print("Task 1")
@@ -244,37 +250,40 @@ print("\n\nTask 2")
 u_res1 = Decryption(x1,k,n,1)
 printDec(u_res1)
 
-#%%Task 3-4 
-print("\n\nTask 3-4")
+#%%Task 3
+print("\n\nTask 3")
 #trying to find k with linear cipher
 u = 0x80000000
 u = list(hexToBinary(u))
 u = [int(i) for i in u] 
 
-k_hacked = linear_cryptoanalysis_KPA(u,x1)
-print("hacked key :"+ str(k_hacked))
-print("key zero:"+ str(k0))
-print(k_hacked == k0)
-
-print("\n\nTask 4 - Checking Pairs")
+a = find_A(lu,lk)
+b = find_B(lu,lk)
+x3 = np.remainder(np.dot(a,k0) + np.dot(b,u),2)
+result = np.array_equal(x3, x1)
+if result == True:
+    print("x from Encryption function:", binaryToHex(x1))
+    print("x from the equation Ak+Bu:", binaryToHex(x3))
+    print("Linearity of the system is proven")
+#%%Task 3
+print("\n\nTask 4")
 filename = "KPApairsPrague_linear.hex"
 data = readFile_Binary(filename)
 
 lu = len(data[0][0])
 lx = len(data[0][1])
-k_hacked_list = []
+lk = lu
+kg_l = [] #list of key guesses
+x_g =[] #list of x guesses
 for i in data:
-    k_hacked = linear_cryptoanalysis_KPA(i[0],i[1])
-    #print("For u = {}\nFor x = {}\nk = {}".format(binaryToHex(i[0]),binaryToHex(i[1]),k_hacked))
-    k_hacked_list.append(k_hacked)
-for i in data:
-    print("For u = ",binaryToHex(i[0]))
-    for j in range(0,len(k_hacked_list) ):
-        res = Encryption(i[0],k_hacked_list[j],17,1)[0]
-        binaryToHex(res)
-    
-#print(binaryToHex(data[0][0]))
-#print(binaryToHex(Encryption(data[0][0],linear_cryptoanalysis_KPA(data[0][0],data[0][1]),17,1)[0]))
+    k_guess = linear_cryptoanalysis_KPA(i[0],i[1])
+    kg_l.append(k_guess)
+    a = find_A(lu,lk)
+    b = find_B(lu,lk)
+    x3 = np.remainder(np.dot(a,k_guess) + np.dot(b,i[0]),2)
+    x_g.append(Encryption(i[0],k_guess,17,1)[0])
+    print("A(k_guess = {}) + Bu = x ->{}".format( binaryToHex(k_guess),np.array_equal(x3, i[1])))
+
 #%%Task5 - Test
 print("\n\nTask 5")
 lu = 32
