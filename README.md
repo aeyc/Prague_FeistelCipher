@@ -9,11 +9,3 @@ then run the code. Task 8 is added to this version of code. Because it needs to 
 
 https://colab.research.google.com/drive/1tK1uiKzG2tn_2-ElrUB-0qs-MTWHNF_w?usp=sharing
 
-
-Will be less up-to-date version probably :(
-
-
-- task3&4 needs to be modified based on Jiancheng's code.
-- task4 should be finished with testing KPA_linear.hex file to finding key.
-- task6
-- task8 is implemented needs review
