@@ -227,6 +227,19 @@ def linear_cryptoanalysis_KPA(u,x):
     k = np.dot(a_inv,tmp)
     k = np.remainder(k,2)
     return k
+
+#nearly-linear cryptoanalysis KPA
+def nearly_linear_cryptoanalysis_KPA(u,x):
+    a=find_A(len(u),len(u))
+    a_inv = binaryInv(a)
+    b= find_B(len(u),len(u)) 
+    c = np.identity(len(u)).astype(int)
+    tmp = np.dot(b,u)
+    tmp = tmp+np.dot(c,x)
+    tmp = np.remainder(tmp,2)
+    k = np.dot(a_inv,tmp)
+    k = np.remainder(k,2)
+    return k
 #%%Task1 - Test
 print("Task 1")
 lu = 32
@@ -265,7 +278,19 @@ if result == True:
     print("x from Encryption function:", binaryToHex(x1))
     print("x from the equation Ak+Bu:", binaryToHex(x3))
     print("Linearity of the system is proven")
-#%%Task 3
+    
+import matplotlib.pyplot as plt
+
+plt.matshow(a);
+plt.colorbar()
+plt.title("Matrix A")
+plt.show()
+
+plt.matshow(b);
+plt.colorbar()
+plt.title("Matrix B")
+plt.show()
+#%%Task 4
 print("\n\nTask 4")
 filename = "KPApairsPrague_linear.hex"
 data = readFile_Binary(filename)
@@ -283,6 +308,38 @@ for i in data:
     x3 = np.remainder(np.dot(a,k_guess) + np.dot(b,i[0]),2)
     x_g.append(Encryption(i[0],k_guess,17,1)[0])
     print("A(k_guess = {}) + Bu = x ->{}".format( binaryToHex(k_guess),np.array_equal(x3, i[1])))
+
+appr = np.array(kg_l)
+appr = appr.sum(axis = 0)
+for j in range(0,len(appr)):
+    if appr[j] > 2.5:
+        appr[j] = 1
+    else:
+        appr[j] = 0
+x_guess_l = []
+
+for j in data:
+    x_guess = Encryption(j[0],appr,17,1)[0]
+    x_guess_l.append(x_guess)
+x_real = []
+for i in data:
+    x_real.append(i[1])
+truth_e = 0
+truth_a = 0
+truth_e_l = []
+truth_a_l = []
+for j in range(0,len(x_g)):
+    truth_e = 0
+    truth_a = 0
+    for i in range(0,len(x_g[0])):
+        if x_g[j][i] == x_real[j][i]:
+            truth_e +=1
+        if x_guess_l[j][i] == x_real[j][i]:
+            truth_a +=1
+    truth_e_l.append(truth_e)
+    truth_a_l.append(truth_a) 
+    print("Approximate key result for x(={}) = {}".format(binaryToHex(x_real[j]),truth_a))
+    print("Guessed key result for x(={}) = {}".format(binaryToHex(x_real[j]),truth_e))
 
 #%%Task5 - Test
 print("\n\nTask 5")
@@ -307,6 +364,26 @@ u = [int(i) for i in u]
 
 x5,k = Encryption(u,k0,n,5)
 printEnc(x5)
+#%%%Task 6 
+print("\n\nTask 6")
+filename = "KPApairsPrague_nearly_linear.hex"
+data = readFile_Binary(filename)
+
+lu = len(data[0][0])
+lx = len(data[0][1])
+lk = lu
+k6_l = []
+c = np.identity(lu)
+a = find_A(lu,lk)
+b = find_B(lu,lk)
+for i in data:
+    k6 = nearly_linear_cryptoanalysis_KPA(i[0], i[1])
+    print("k_guess",binaryToHex(k6))
+    k6_l.append(k6)
+    #Ak⊕Bu⊕Cx=0
+    # res6 = np.dot(a,k) + np.dot(b,i[0])
+    # res6 = np.remainder((res6 + np.dot(c,i[1])),2)
+    # print("A(k_guess = {}) XOR Bu XOR Cx= {}".format( binaryToHex(k_guess),res6))
 #%%Task 7 - Test
 print("\n\nTask 7")
 lu = 16
@@ -337,9 +414,6 @@ printDec(u_res7)
 print("\n\nTask 8")
 filename = "KPApairsPrague_non_linear.hex"
 data = readFile_Binary(filename)
-# for i in data:
-#     if len(i[0]) == len(i[1]):
-#         print("Elements of pair have same lengths")
 lu = len(data[0][0])
 lx = len(data[0][1])
 import time
